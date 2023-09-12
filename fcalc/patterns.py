@@ -7,5 +7,6 @@ class IntervalPattern:
 
 class CategoricalPattern:
     def __init__(self, test, train) -> None:
-        self.vals = test
         self.mask = list(map(lambda x, y: x == y, test, train))
+        self.vals = test[self.mask]
+        
