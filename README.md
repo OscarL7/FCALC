@@ -44,7 +44,7 @@ Then, we count the support in negative and positive classes for this intersectio
 
 Finally, we plug the obtained values of support into decision function and classify $x$ based on them.  
 Baseline decision function is:
-$$ y = \dfrac{\sum\limits_{x_{pos} \in X_{pos}} a_{x_{pos}} [b_{x_{pos}} \leq \alpha * |X_{neg}|]}{|X_{pos}|^2} > \dfrac{\sum\limits_{x_{neg} \in X_{neg}} a_{x_{neg}} [b_{x_{neg}} \leq \alpha * |X_{pos}|]}{|X_{neg}|^2}, $$
+$$y = \dfrac{\sum\limits_{x_{pos} \in X_{pos}} a_{x_{pos}} [b_{x_{pos}} \leq \alpha * |X_{neg}|]}{|X_{pos}|^2} > \dfrac{\sum\limits_{x_{neg} \in X_{neg}} a_{x_{neg}} [b_{x_{neg}} \leq \alpha * |X_{pos}|]}{|X_{neg}|^2}$$
 where $a_{x_k}$ is support in class $k$, and $b_{x_k}$ is support in the opposite class, of the intersection $x\cap x_k$.
 ### To-do list
 1. Choose at least 3 datasets, define the target attribute, binarize data if necessary.\
