@@ -16,8 +16,8 @@ class FcaClassifier:
 
 class BinarizedClassifier(FcaClassifier):
     
-    def __init__(self, context, labels, intersections=None, support=None, method = "standard"):
-        super().__init__(context, labels, intersections, support)
+    def __init__(self, context, labels, support=None, method = "standard"):
+        super().__init__(context, labels, support)
         self.method = method
 
     def compute_support(self, test):
@@ -57,8 +57,8 @@ class BinarizedClassifier(FcaClassifier):
 
 
 class PatternClassifier(FcaClassifier):
-    def __init__(self, context, labels, intersections=None, support=None, method="standard", categorical=None):
-        super().__init__(context, labels, intersections, support)
+    def __init__(self, context, labels, support=None, method="standard", categorical=None):
+        super().__init__(context, labels, support)
         self.method = method
         if categorical is None:
             self.categorical = []
