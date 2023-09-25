@@ -1,17 +1,13 @@
 from . import patterns
+from . import decision_functions
 import numpy as np
 
 class FcaClassifier:
 
-    def __init__(self, context, labels, intersections = None, support = None):
+    def __init__(self, context, labels, support = None):
         
         self.context = context
         self.labels = labels
-        
-        #if intersections is None:
-        #    self.intersections = [[],[]]
-        #else:
-        #    self.intersections = intersections
         
         if support is None:
             self.support = []
@@ -35,14 +31,10 @@ class BinarizedClassifier(FcaClassifier):
 
         for i in range(len(test)):
             intsec_pos = test[i].reshape(1, -1) & train_pos
-            self.intersections[0].append(intsec_pos)
-             #intsec_pos = intsec_pos[intsec_pos.sum(axis=1) >= min_card]
             n_support_pos = ((intsec_pos @ (~train_pos.T)) == 0).sum(axis=1)
             n_counter_pos = ((intsec_pos @ (~train_neg.T)) == 0).sum(axis=1)
 
             intsec_neg = test[i].reshape(1, -1) & train_neg
-            self.intersections[1].append(intsec_neg)
-            # intsec_neg = intsec_neg[intsec_pos.sum(axis=1) >= min_card]
             n_support_neg = ((intsec_neg @ (~train_neg.T)) == 0).sum(axis=1)
             n_counter_neg = ((intsec_neg @ (~train_pos.T)) == 0).sum(axis=1)
 
@@ -51,10 +43,18 @@ class BinarizedClassifier(FcaClassifier):
             negative_support[i] = n_support_neg
             negative_counter[i] = n_counter_neg
         
-        self.support = [(positive_support, positive_counter), (negative_support, negative_counter)]
+        self.support = [np.column_stack((positive_support, positive_counter)), 
+                        np.column_stack((negative_support, negative_counter))]
 
     def predict(self, test):
-        pass
+        self.compute_support(test)
+        self.predictions = np.zeros(len(test))
+
+        if self.method == "standard":
+            for i in self.support:
+                self.predictions[i] = decision_functions.standard_method(self.support[0][i], 
+                                                                         self.support[1][i])
+
 
 class PatternClassifier(FcaClassifier):
     def __init__(self, context, labels, intersections=None, support=None, method="standard", categorical=None):
@@ -80,8 +80,6 @@ class PatternClassifier(FcaClassifier):
                     intsec = patterns.IntervalPattern(test[i],train_pos[j])
                     positive_support[i][j] = sum((~(intsec.low <= train_pos * train_pos <= intsec.high)).sum(axis=1) == 0)
                     positive_counter[i][j] = sum((~(intsec.low <= train_neg * train_neg <= intsec.high)).sum(axis=1) == 0)
-                    #positive_support[i][j] = n_support_pos
-                    #positive_counter[i][j] = n_counter_pos
                 
                 for j in range(len(train_neg)):
                     intsec = patterns.IntervalPattern(test[i],train_neg[j])
@@ -128,3 +126,14 @@ class PatternClassifier(FcaClassifier):
                                                  ((~(train_pos[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
                     
         self.support = [(positive_support, positive_counter), (negative_support, negative_counter)]
+
+    def predict(self, test):
+        if not self.support:
+            self.compute_support(test)
+        
+        self.predictions = np.zeros(len(test))
+
+        if self.method == "standard":
+            for i in self.support:
+                self.predictions[i] = decision_functions.standard_method(self.support[0][i], 
+                                                                         self.support[1][i])
