@@ -16,9 +16,10 @@ class FcaClassifier:
 
 class BinarizedClassifier(FcaClassifier):
     
-    def __init__(self, context, labels, support=None, method = "standard"):
+    def __init__(self, context, labels, support=None, method="standard", alpha=0.):
         super().__init__(context, labels, support)
         self.method = method
+        self.alpha = alpha
 
     def compute_support(self, test):
         train_pos = self.context[self.labels == True]
@@ -43,23 +44,25 @@ class BinarizedClassifier(FcaClassifier):
             negative_support[i] = n_support_neg
             negative_counter[i] = n_counter_neg
         
-        self.support = [np.column_stack((positive_support, positive_counter)), 
-                        np.column_stack((negative_support, negative_counter))]
+        self.support = [np.array((positive_support, positive_counter)), 
+                        np.array((negative_support, negative_counter))]
 
     def predict(self, test):
         self.compute_support(test)
         self.predictions = np.zeros(len(test))
 
         if self.method == "standard":
-            for i in self.support:
-                self.predictions[i] = decision_functions.standard_method(self.support[0][i], 
-                                                                         self.support[1][i])
+            for i in range(len(test)):
+                self.predictions[i] = decision_functions.standard_method(self.support[0][:,i], 
+                                                                         self.support[1][:,i], 
+                                                                         self.alpha)
 
 
 class PatternClassifier(FcaClassifier):
-    def __init__(self, context, labels, support=None, method="standard", categorical=None):
+    def __init__(self, context, labels, support=None, categorical=None, method="standard", alpha=0.):
         super().__init__(context, labels, support)
         self.method = method
+        self.alpha = alpha
         if categorical is None:
             self.categorical = []
         else: 
@@ -74,7 +77,7 @@ class PatternClassifier(FcaClassifier):
         negative_support = np.empty(shape=(len(test), len(train_neg)))
         negative_counter = np.empty(shape=(len(test), len(train_neg)))
 
-        if not self.categorical:
+        if len(self.categorical) == 0:
             for i in range(len(test)):
                 for j in range(len(train_pos)):
                     intsec = patterns.IntervalPattern(test[i],train_pos[j])
@@ -86,7 +89,7 @@ class PatternClassifier(FcaClassifier):
                     negative_support[i][j] = sum((~(intsec.low <= train_neg * train_neg <= intsec.high)).sum(axis=1) == 0)
                     negative_counter[i][j] = sum((~(intsec.low <= train_pos * train_pos <= intsec.high)).sum(axis=1) == 0)
 
-        elif len(self.categorical) == len(test[0]):
+        elif len(self.categorical) == test.shape[1]:
             for i in range(len(test)):
                 for j in range(len(train_pos)):
                     intsec = patterns.CategoricalPattern(test[i], train_pos[j])
@@ -99,7 +102,6 @@ class PatternClassifier(FcaClassifier):
                     negative_counter[i][j] = sum((~(train_pos[:,intsec.mask] == intsec.vals)).sum(axis=1)==0)
 
         else:
-
             train_pos_cat =  train_pos[self.categorical]
             train_pos_num = np.delete(train_pos, self.categorical, axis=1)
             train_neg_cat =  train_neg[self.categorical]
@@ -125,7 +127,8 @@ class PatternClassifier(FcaClassifier):
                     negative_counter[i][j] = sum(((~(intsec_num.low <= train_pos_num * train_pos_num <= intsec_num.high)).sum(axis=1) == 0) * 
                                                  ((~(train_pos[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
                     
-        self.support = [(positive_support, positive_counter), (negative_support, negative_counter)]
+        self.support = [np.array((positive_support, positive_counter)), 
+                        np.array((negative_support, negative_counter))]
 
     def predict(self, test):
         if not self.support:
@@ -134,6 +137,7 @@ class PatternClassifier(FcaClassifier):
         self.predictions = np.zeros(len(test))
 
         if self.method == "standard":
-            for i in self.support:
-                self.predictions[i] = decision_functions.standard_method(self.support[0][i], 
-                                                                         self.support[1][i])
+            for i in range(len(test)):
+                self.predictions[i] = decision_functions.standard_method(self.support[0][:,i], 
+                                                                         self.support[1][:,i],
+                                                                         self.alpha)
