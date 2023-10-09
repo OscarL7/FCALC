@@ -81,13 +81,13 @@ class PatternClassifier(FcaClassifier):
             for i in range(len(test)):
                 for j in range(len(train_pos)):
                     intsec = patterns.IntervalPattern(test[i],train_pos[j])
-                    positive_support[i][j] = sum((~(intsec.low <= train_pos * train_pos <= intsec.high)).sum(axis=1) == 0)
-                    positive_counter[i][j] = sum((~(intsec.low <= train_neg * train_neg <= intsec.high)).sum(axis=1) == 0)
+                    positive_support[i][j] = sum((~((intsec.low <= train_pos) * (train_pos <= intsec.high))).sum(axis=1) == 0)
+                    positive_counter[i][j] = sum((~((intsec.low <= train_neg) * (train_neg <= intsec.high))).sum(axis=1) == 0)
                 
                 for j in range(len(train_neg)):
                     intsec = patterns.IntervalPattern(test[i],train_neg[j])
-                    negative_support[i][j] = sum((~(intsec.low <= train_neg * train_neg <= intsec.high)).sum(axis=1) == 0)
-                    negative_counter[i][j] = sum((~(intsec.low <= train_pos * train_pos <= intsec.high)).sum(axis=1) == 0)
+                    negative_support[i][j] = sum((~((intsec.low <= train_neg) * (train_neg <= intsec.high))).sum(axis=1) == 0)
+                    negative_counter[i][j] = sum((~((intsec.low <= train_pos) * (train_pos <= intsec.high))).sum(axis=1) == 0)
 
         elif len(self.categorical) == test.shape[1]:
             for i in range(len(test)):
@@ -102,9 +102,9 @@ class PatternClassifier(FcaClassifier):
                     negative_counter[i][j] = sum((~(train_pos[:,intsec.mask] == intsec.vals)).sum(axis=1)==0)
 
         else:
-            train_pos_cat =  train_pos[self.categorical]
+            train_pos_cat =  train_pos[:,self.categorical]
             train_pos_num = np.delete(train_pos, self.categorical, axis=1)
-            train_neg_cat =  train_neg[self.categorical]
+            train_neg_cat =  train_neg[:,self.categorical]
             train_neg_num = np.delete(train_neg, self.categorical, axis=1)
 
             for i in range(len(test)):
@@ -113,19 +113,19 @@ class PatternClassifier(FcaClassifier):
                     intsec_cat = patterns.CategoricalPattern(test[i][self.categorical], train_pos_cat[j])
                     intsec_num = patterns.IntervalPattern(np.delete(test[i], self.categorical), train_pos_num[j])
                     
-                    positive_support[i][j] = sum(((~(intsec_num.low <= train_pos_num * train_pos_num <= intsec_num.high)).sum(axis=1) == 0) * 
+                    positive_support[i][j] = sum(((~((intsec_num.low <= train_pos_num) * (train_pos_num <= intsec_num.high))).sum(axis=1) == 0) * 
                                                  ((~(train_pos_cat[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
-                    positive_counter[i][j] = sum(((~(intsec_num.low <= train_neg_num * train_neg_num <= intsec_num.high)).sum(axis=1) == 0) * 
+                    positive_counter[i][j] = sum(((~((intsec_num.low <= train_neg_num) * (train_neg_num <= intsec_num.high))).sum(axis=1) == 0) * 
                                                  ((~(train_neg_cat[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
                     
                 for j in range(len(train_neg)):
                     intsec_cat = patterns.CategoricalPattern(test[i][self.categorical], train_neg_cat[j])
                     intsec_num = patterns.IntervalPattern(np.delete(test[i], self.categorical), train_neg_num[j])
                     
-                    negative_support[i][j] = sum(((~(intsec_num.low <= train_neg_num * train_neg_num <= intsec_num.high)).sum(axis=1) == 0) * 
+                    negative_support[i][j] = sum(((~((intsec_num.low <= train_neg_num) * (train_neg_num <= intsec_num.high))).sum(axis=1) == 0) * 
                                                  ((~(train_neg_cat[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
-                    negative_counter[i][j] = sum(((~(intsec_num.low <= train_pos_num * train_pos_num <= intsec_num.high)).sum(axis=1) == 0) * 
-                                                 ((~(train_pos[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
+                    negative_counter[i][j] = sum(((~((intsec_num.low <= train_pos_num) * (train_pos_num <= intsec_num.high))).sum(axis=1) == 0) * 
+                                                 ((~(train_pos_cat[:,intsec_cat.mask] == intsec_cat.vals)).sum(axis=1)==0))
                     
         self.support = [np.array((positive_support, positive_counter)), 
                         np.array((negative_support, negative_counter))]
