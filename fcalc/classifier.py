@@ -1,5 +1,5 @@
 from . import patterns
-from . import decision_functions
+from . import binary_decision_functions
 import numpy as np
 
 class FcaClassifier:
@@ -14,7 +14,7 @@ class FcaClassifier:
         else:
             self.support = support
 
-class BinarizedClassifier(FcaClassifier):
+class BinarizedBinaryClassifier(FcaClassifier):
     
     def __init__(self, context, labels, support=None, method="standard", alpha=0.):
         super().__init__(context, labels, support)
@@ -25,10 +25,10 @@ class BinarizedClassifier(FcaClassifier):
         train_pos = self.context[self.labels == True]
         train_neg = self.context[self.labels == False]
 
-        positive_support = np.empty(shape=(len(test), len(train_pos)))
-        positive_counter = np.empty(shape=(len(test), len(train_pos)))
-        negative_support = np.empty(shape=(len(test), len(train_neg)))
-        negative_counter = np.empty(shape=(len(test), len(train_neg)))
+        positive_support = np.zeros(shape=(len(test), len(train_pos)))
+        positive_counter = np.zeros(shape=(len(test), len(train_pos)))
+        negative_support = np.zeros(shape=(len(test), len(train_neg)))
+        negative_counter = np.zeros(shape=(len(test), len(train_neg)))
 
         for i in range(len(test)):
             intsec_pos = test[i].reshape(1, -1) & train_pos
@@ -53,12 +53,21 @@ class BinarizedClassifier(FcaClassifier):
 
         if self.method == "standard":
             for i in range(len(test)):
-                self.predictions[i] = decision_functions.standard_method(self.support[0][:,i], 
-                                                                         self.support[1][:,i], 
-                                                                         self.alpha)
+                self.predictions[i] = binary_decision_functions.alpha_weak(self.support[0][:,i], 
+                                                                           self.support[1][:,i], 
+                                                                           self.alpha)
+        elif self.method == "standard-support":
+            for i in range(len(test)):
+                self.predictions[i] = binary_decision_functions.alpha_weak_support(self.support[0][:,i], 
+                                                                                   self.support[1][:,i], 
+                                                                                   self.alpha)
+        elif self.method == "ratio-support":
+            for i in range(len(test)):
+                self.predictions[i] = binary_decision_functions.ratio_support(self.support[0][:,i], 
+                                                                              self.support[1][:,i], 
+                                                                              self.alpha)
 
-
-class PatternClassifier(FcaClassifier):
+class PatternBinaryClassifier(FcaClassifier):
     def __init__(self, context, labels, support=None, categorical=None, method="standard", alpha=0.):
         super().__init__(context, labels, support)
         self.method = method
@@ -72,10 +81,10 @@ class PatternClassifier(FcaClassifier):
         train_pos = self.context[self.labels == True]
         train_neg = self.context[self.labels == False]
 
-        positive_support = np.empty(shape=(len(test), len(train_pos)))
-        positive_counter = np.empty(shape=(len(test), len(train_pos)))
-        negative_support = np.empty(shape=(len(test), len(train_neg)))
-        negative_counter = np.empty(shape=(len(test), len(train_neg)))
+        positive_support = np.zeros(shape=(len(test), len(train_pos)))
+        positive_counter = np.zeros(shape=(len(test), len(train_pos)))
+        negative_support = np.zeros(shape=(len(test), len(train_neg)))
+        negative_counter = np.zeros(shape=(len(test), len(train_neg)))
 
         if len(self.categorical) == 0:
             for i in range(len(test)):
@@ -138,6 +147,57 @@ class PatternClassifier(FcaClassifier):
 
         if self.method == "standard":
             for i in range(len(test)):
-                self.predictions[i] = decision_functions.standard_method(self.support[0][:,i], 
-                                                                         self.support[1][:,i],
-                                                                         self.alpha)
+                self.predictions[i] = binary_decision_functions.alpha_weak(self.support[0][:,i], 
+                                                                            self.support[1][:,i],
+                                                                            self.alpha)
+        elif self.method == "standard-support":
+            for i in range(len(test)):
+                self.predictions[i] = binary_decision_functions.alpha_weak_support(self.support[0][:,i], 
+                                                                                   self.support[1][:,i], 
+                                                                                   self.alpha)
+                
+        elif self.method == "ratio-support":
+            for i in range(len(test)):
+                self.predictions[i] = binary_decision_functions.ratio_support(self.support[0][:,i], 
+                                                                              self.support[1][:,i], 
+                                                                              self.alpha)
+                        
+class BinarizedClassifier(FcaClassifier):
+    
+    def __init__(self, context, labels, support=None, method="standard", alpha=0.):
+        super().__init__(context, labels, support)
+        self.classes = np.unique(labels)
+        self.class_lengths = np.array([len(self.context[self.labels == c]) for c in self.classes])
+        self.method = method
+        self.alpha = alpha
+
+    def compute_support(self, test):
+        for c in self.classes:
+
+            train_pos = self.context[self.labels == c]
+            train_neg = self.context[self.labels != c]
+
+            positive_support = np.empty(shape=(len(test), len(train_pos)))
+            positive_counter = np.empty(shape=(len(test), len(train_pos)))
+
+            for i in range(len(test)):
+                intsec_pos = test[i].reshape(1, -1) & train_pos
+                n_support_pos = ((intsec_pos @ (~train_pos.T)) == 0).sum(axis=1)
+                n_counter_pos = ((intsec_pos @ (~train_neg.T)) == 0).sum(axis=1)
+
+                positive_support[i] = n_support_pos
+                positive_counter[i] = n_counter_pos
+
+            self.support.append(np.array((positive_support, positive_counter)))
+
+    def predict(self, test):
+        pass
+        # self.compute_support(test)
+        # self.predictions = np.zeros(len(test))
+
+        # if self.method == "standard":
+        #     for i in range(len(test)):
+        #         self.predictions[i] = decision_functions.standard_method(self.support[0][:,i], 
+        #                                                                  self.support[1][:,i], 
+        #                                                                  self.alpha)
+
