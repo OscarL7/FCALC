@@ -3,11 +3,6 @@
 
 # OSDA 2023 Lazy FCA
 
-_**!THE CODE IS NOT READY YET!\
-!YOU WILL BE NOTIFIED THROUGH TELEGRAM WHEN IT'S DONE!**_
-
-_**NB: More updates to come**_
-
 This repository contains tools for a "**Lazy FCA**" big homework assignment for the course "Ordered Sets in Data Analysis" taught at HSE in the "Data Science" master's program in Fall 2023.
 
 ## Task description
@@ -62,3 +57,43 @@ Useful resources:
 3. Tune lazy-FCA classification with binary attributes to find the best classification. Select most contributing intersections responsible for classification
 4. Tune  lazy-FCA classification with pattern structures to find the best classification.Select most contributing intersections responsible for classification
 5.  Submit a report with comparison of all models, both standard and developed by you.
+
+## Example
+Let's start with importing the libraries
+```python
+import fcalc
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score
+```
+### Binarized data
+I will use tic-tac-toe dataset as an example for the binarized data. Firstly we need to read our data and binarize it:
+```python
+column_names = [
+        'top-left-square', 'top-middle-square', 'top-right-square',
+        'middle-left-square', 'middle-middle-square', 'middle-right-square',
+        'bottom-left-square', 'bottom-middle-square', 'bottom-right-square',
+        'Class'
+    ]
+df = pd.read_csv('data_sets/tic-tac-toe.data', names = column_names)
+df['Class'] = [x == 'positive' for x in df['Class']]
+X = pd.get_dummies(df[column_names[:-1]], prefix=column_names[:-1]).astype(bool)
+y = df['Class']
+```
+Then we need to split our data into train and test:
+```python
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+```
+Then we can initialize our classifier, to do so, you need to provide training data and training labels, both in numpy format:
+```python
+bin_cls = fcalc.classifier.BinarizedBinaryClassifier(X_train.values, y_train.to_numpy())
+```
+You can also specify the method and parameter for that method. Now you can predict the classes for your test data and evaluate the models:
+```python
+bin_cls.predict(X_test.values)
+print(accuracy_score(y_test, bin_cls.predictions))
+print(f1_score(y_test, bin_cls.predictions))
+```
+>0.9965277777777778
+>0.9974160206718347
