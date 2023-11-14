@@ -43,7 +43,7 @@ There are three parameterized methods for your choice:
 
 2) "standard-support" we consider number of all alpha-weak hypothes with their support and classify based on it: $$y = \dfrac{\sum\limits_{x_{pos} \in X_{pos}} a_{x_{pos}} [b_{x_{pos}} \leq \alpha * |X_{neg}|]}{|X_{pos}|^2} > \dfrac{\sum\limits_{x_{neg} \in X_{neg}} a_{x_{neg}} [b_{x_{neg}} \leq \alpha * |X_{pos}|]}{|X_{neg}|^2}$$
 
-3) "ratio-support" we consider the ratio of support in target class and in opposite one for hypotheses which support in target class is $\alpha$ times higher than in other: $$y = \underset{k}{\argmax} \left(\dfrac{|X_{train} \backslash X_{c_k}|\cdot \sum_{x_i \in X_{c_k}} a_i \cdot [\frac{a_i}{|X_{c_k}|} \geq \gamma \frac{b_i}{|X_{train} \backslash X_{c_k}|}]}{|X_{c_k}|\cdot \sum_{x_i \in X_{c_k}} b_i\cdot[\frac{a_i}{|X_{c_k}|} \geq \gamma \frac{b_i}{|X_{train} \backslash X_{c_k}|}]}  \right)$$
+3) "ratio-support" we consider the ratio of support in target class and in opposite one for hypotheses which support in target class is $\alpha$ times higher than in other: $$y = \underset{k}{argmax} \left(\dfrac{|X_{train} \backslash X_{c_k}|\cdot \sum_{x_i \in X_{c_k}} a_i \cdot [\frac{a_i}{|X_{c_k}|} \geq \gamma \frac{b_i}{|X_{train} \backslash X_{c_k}|}]}{|X_{c_k}|\cdot \sum_{x_i \in X_{c_k}} b_i\cdot[\frac{a_i}{|X_{c_k}|} \geq \gamma \frac{b_i}{|X_{train} \backslash X_{c_k}|}]}  \right)$$
 
 where $a_{x_k}$ is support in class $k$, and $b_{x_k}$ is support in the opposite class, of the intersection $x\cap x_k$.
 ### To-do list
